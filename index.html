@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Demand Research Tool v3</title>
+<style>
+:root {
+  --bg: #05080f;
+  --surface: #0b1020;
+  --surface2: #111827;
+  --border: rgba(255,255,255,0.07);
+  --border-hi: rgba(255,255,255,0.15);
+  --accent: #00e5ff;
+  --accent2: #7c3aed;
+  --green: #10b981;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --purple: #a78bfa;
+  --text: #f1f5f9;
+  --mid: #94a3b8;
+  --soft: #64748b;
+  --mono: 'Courier New', monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;font-size:13px;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(0,229,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.02) 1px,transparent 1px);
+  background-size:40px 40px;}
+.shell{position:relative;z-index:1;max-width:1300px;margin:0 auto;padding:20px 20px 60px;}
+
+/* Header */
+.hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.hdr h1{font-size:22px;font-weight:800;letter-spacing:-0.02em;}
+.hdr h1 span{color:var(--accent);}
+.hdr p{font-size:11px;color:var(--soft);font-family:var(--mono);margin-top:4px;}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.badge{font-family:var(--mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:3px;border:1px solid;}
+.bc{border-color:var(--accent);color:var(--accent);}
+.bg{border-color:var(--green);color:var(--green);}
+.bp{border-color:var(--purple);color:var(--purple);}
+.bw{border-color:var(--warn);color:var(--warn);}
+
+/* API bar */
+.api-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);border-radius:8px;margin-bottom:16px;flex-wrap:wrap;}
+.api-bar label{font-family:var(--mono);font-size:10px;color:var(--purple);text-transform:uppercase;white-space:nowrap;}
+.api-inp{flex:1;font-family:var(--mono);font-size:11px;padding:6px 10px;border-radius:5px;border:1px solid rgba(124,58,237,0.3);background:var(--bg);color:var(--text);outline:none;min-width:180px;}
+.api-inp:focus{border-color:var(--purple);}
+.api-st{font-family:var(--mono);font-size:10px;white-space:nowrap;}
+.api-st.ok{color:var(--green);}
+.api-st.no{color:var(--soft);}
+.api-hint{font-size:10px;color:var(--soft);flex-basis:100%;}
+
+/* Inputs */
+.inp-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.inp-f{display:flex;flex-direction:column;gap:3px;}
+.inp-f label{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--soft);}
+.inp-f input{font-family:var(--mono);font-size:11px;padding:6px 10px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);outline:none;min-width:140px;}
+.inp-f input:focus{border-color:var(--accent);}
+
+/* Nav */
+.nav{display:flex;gap:2px;margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px;}
+.nav-btn{flex:1;font-family:var(--mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;padding:8px 4px;border:none;border-radius:7px;background:transparent;color:var(--soft);cursor:pointer;transition:all 0.2s;}
+.nav-btn:hover{color:var(--mid);background:rgba(255,255,255,0.03);}
+.nav-btn.active{background:rgba(0,229,255,0.08);color:var(--accent);border:1px solid rgba(0,229,255,0.2);}
+
+/* Panels */
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* Section head */
+.sh{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--mid);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.sh::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* Notice */
+.note{padding:10px 14px;border-radius:8px;font-size:11px;line-height:1.7;margin-bottom:12px;}
+.note-info{background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.15);color:var(--mid);}
+.note-warn{background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);color:#fcd34d;}
+.note-green{background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);color:var(--green);}
+
+/* Buttons */
+.btn{font-family:var(--mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;padding:7px 14px;border-radius:6px;border:1px solid;cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px;}
+.btn-c{border-color:var(--accent);color:var(--accent);background:rgba(0,229,255,0.07);}
+.btn-c:hover{background:rgba(0,229,255,0.14);}
+.btn-g{border-color:var(--green);color:var(--green);background:rgba(16,185,129,0.07);}
+.btn-g:hover{background:rgba(16,185,129,0.14);}
+.btn-p{border-color:var(--purple);color:var(--purple);background:rgba(124,58,237,0.07);}
+.btn-p:hover{background:rgba(124,58,237,0.14);}
+.btn-w{border-color:var(--warn);color:var(--warn);background:rgba(245,158,11,0.07);}
+.btn-s{border-color:var(--border-hi);color:var(--mid);background:transparent;}
+.btn-s:hover{border-color:var(--mid);}
+.btn:disabled{opacity:0.35;cursor:default;pointer-events:none;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+
+/* Category grid */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:16px;}
+.cat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.cat-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+.cat-title-wrap{display:flex;align-items:center;gap:8px;}
+.cat-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.cat-title{font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;}
+.cat-imda{font-family:var(--mono);font-size:9px;color:var(--soft);margin-top:1px;}
+
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+.chip{font-family:var(--mono);font-size:10px;padding:3px 7px;border-radius:4px;border:1px solid var(--border-hi);background:var(--surface2);color:var(--mid);cursor:pointer;transition:all 0.15s;user-select:none;display:inline-flex;align-items:center;gap:4px;}
+.chip:hover{border-color:var(--accent);color:var(--accent);}
+.chip.sel{border-color:var(--accent);color:var(--accent);background:rgba(0,229,255,0.08);}
+.chip.h{border-color:var(--green);color:var(--green);}
+.chip.h.sel{background:rgba(16,185,129,0.1);}
+.chip.m{border-color:var(--warn);color:var(--warn);}
+.chip.m.sel{background:rgba(245,158,11,0.08);}
+.chip.lo{border-color:var(--danger);color:var(--danger);opacity:0.3;pointer-events:none;}
+.chip .sc{font-size:8px;padding:1px 3px;border-radius:2px;font-weight:700;}
+.chip.h .sc{background:var(--green);color:#000;}
+.chip.m .sc{background:var(--warn);color:#000;}
+.chip.lo .sc{background:var(--danger);color:#fff;}
+.chip .rm{color:var(--danger);opacity:0.5;cursor:pointer;font-size:12px;line-height:1;}
+.chip .rm:hover{opacity:1;}
+.add-row{display:flex;gap:6px;margin-top:6px;}
+.add-inp{flex:1;font-family:var(--mono);font-size:10px;padding:4px 8px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none;}
+.add-inp:focus{border-color:var(--accent);}
+.add-btn{font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:4px;border:1px solid rgba(0,229,255,0.3);background:rgba(0,229,255,0.06);color:var(--accent);cursor:pointer;white-space:nowrap;}
+
+/* Batch links in hunting */
+.batch-links{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;}
+.batch-link-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.t-link{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:4px;border:1px solid rgba(0,229,255,0.3);background:rgba(0,229,255,0.05);color:var(--accent);text-decoration:none;white-space:nowrap;}
+.t-link:hover{background:rgba(0,229,255,0.1);}
+.batch-terms{font-family:var(--mono);font-size:9px;color:var(--soft);}
+
+/* Chip score menu */
+.score-menu{position:fixed;z-index:9999;background:var(--surface2);border:1px solid var(--border-hi);border-radius:6px;padding:4px;min-width:90px;box-shadow:0 8px 24px rgba(0,0,0,0.5);}
+.score-menu button{font-family:var(--mono);font-size:10px;padding:5px 10px;border:none;border-radius:4px;background:transparent;cursor:pointer;text-align:left;width:100%;display:block;}
+.score-menu button:hover{background:rgba(255,255,255,0.08);}
+
+/* Hunt stats */
+.hunt-stats{display:flex;gap:20px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:14px;flex-wrap:wrap;}
+.stat-v{font-size:20px;font-weight:800;}
+.stat-l{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--soft);}
+
+/* Phrase builder */
+.phrase-prev{font-family:var(--mono);font-size:11px;color:var(--mid);padding:10px 12px;background:var(--bg);border-radius:6px;border:1px solid var(--border);min-height:40px;line-height:1.9;margin-bottom:10px;}
+.phrase-prev .combo{color:var(--accent);display:block;}
+
+/* KW list */
+.kw-head{display:grid;grid-template-columns:1fr 140px 120px 90px 90px 28px;gap:6px;padding:4px 10px;font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--soft);margin-bottom:4px;}
+.kw-row{display:grid;grid-template-columns:1fr 140px 120px 90px 90px 28px;gap:6px;align-items:center;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:5px;transition:border-color 0.2s;}
+.kw-row.confirmed{border-color:rgba(16,185,129,0.35);background:rgba(16,185,129,0.03);}
+.kw-row.dropped{opacity:0.3;}
+.kw-text{color:var(--text);font-size:11px;}
+.kw-sub{color:var(--soft);font-size:9px;margin-top:1px;font-family:var(--mono);}
+.sp{font-size:9px;padding:2px 6px;border-radius:3px;border:1px solid;white-space:nowrap;}
+.sp1{border-color:#60a5fa;color:#60a5fa;}
+.sp2{border-color:var(--purple);color:var(--purple);}
+.sp3{border-color:var(--green);color:var(--green);}
+.sp4{border-color:#fb923c;color:#fb923c;}
+.kw-sel{font-family:var(--mono);font-size:9px;padding:3px 4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--mid);outline:none;width:100%;}
+.del{background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;opacity:0.4;padding:0;}
+.del:hover{opacity:1;}
+
+/* Stats bar */
+.stats-bar{display:flex;gap:20px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:12px;flex-wrap:wrap;}
+
+/* Scroll */
+.scr{max-height:380px;overflow-y:auto;padding-right:4px;}
+.scr::-webkit-scrollbar{width:3px;}
+.scr::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:2px;}
+
+/* Batch row trends */
+.b-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:5px;}
+.b-num{font-family:var(--mono);font-size:9px;color:var(--soft);min-width:55px;}
+.b-terms{flex:1;font-family:var(--mono);font-size:10px;color:var(--mid);}
+
+/* High consolidation */
+.hi-panel{background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.18);border-radius:10px;padding:16px;margin-top:18px;}
+.hi-panel .sh{color:var(--green);}
+.hi-row{display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--surface2);border:1px solid rgba(16,185,129,0.18);border-radius:6px;margin-bottom:5px;}
+.hi-num{font-family:var(--mono);font-size:9px;color:var(--green);min-width:24px;}
+
+/* GEO */
+.geo-q{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;}
+.geo-num{font-family:var(--mono);font-size:9px;color:var(--soft);min-width:22px;margin-top:2px;}
+.geo-body{flex:1;}
+.geo-qt{font-size:12px;color:var(--mid);line-height:1.5;}
+.geo-qt.hl{color:#fcd34d;}
+.geo-resp{margin-top:8px;padding:10px;background:var(--bg);border:1px solid rgba(0,229,255,0.1);border-radius:6px;font-size:11px;color:var(--mid);line-height:1.6;white-space:pre-wrap;display:none;}
+.geo-resp.show{display:block;}
+.geo-load{color:var(--soft);font-family:var(--mono);font-size:10px;animation:pulse 1.4s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.run-btn{font-family:var(--mono);font-size:9px;padding:4px 10px;border-radius:4px;border:1px solid rgba(124,58,237,0.3);background:rgba(124,58,237,0.06);color:var(--purple);cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.run-btn:hover{background:rgba(124,58,237,0.12);}
+.run-btn:disabled{opacity:0.35;cursor:default;}
+
+/* Report */
+.r-sec{margin-bottom:24px;}
+.r-sec h3{font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(0,229,255,0.1);}
+.rtbl{width:100%;border-collapse:collapse;font-size:11px;}
+.rtbl th{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--soft);padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;}
+.rtbl td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--mid);vertical-align:top;}
+.rtbl tr:hover td{background:rgba(255,255,255,0.02);}
+.imda-chart{display:flex;gap:10px;margin:14px 0;align-items:flex-end;flex-wrap:wrap;}
+.imda-wrap{flex:1;min-width:90px;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.imda-bg{width:100%;background:var(--surface2);border-radius:6px;height:140px;display:flex;align-items:flex-end;border:1px solid var(--border);overflow:hidden;}
+.imda-fill{width:100%;border-radius:4px 4px 0 0;transition:height 0.6s;display:flex;align-items:center;justify-content:center;}
+.imda-lbl{font-family:var(--mono);font-size:9px;text-align:center;text-transform:uppercase;letter-spacing:0.06em;}
+.imda-sub{font-size:10px;color:var(--soft);text-align:center;}
+.gap-item,.rec-item{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--mid);line-height:1.5;}
+.dot-r{width:6px;height:6px;border-radius:50%;background:var(--danger);margin-top:4px;flex-shrink:0;}
+.dot-g{width:6px;height:6px;border-radius:50%;background:var(--green);margin-top:4px;flex-shrink:0;}
+.exp-area{width:100%;min-height:160px;font-family:var(--mono);font-size:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--mid);resize:vertical;outline:none;line-height:1.6;}
+.empty{text-align:center;padding:28px;font-family:var(--mono);font-size:11px;color:var(--soft);}
+.geo-kws-bar{padding:10px 14px;background:rgba(124,58,237,0.05);border:1px solid rgba(124,58,237,0.18);border-radius:8px;margin-bottom:12px;font-size:11px;color:var(--mid);}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div>
+    <h1>AI Demand <span>Research</span> Tool <span style="font-size:13px;color:var(--soft);">v3</span></h1>
+    <p>Singapore · B2B Sales — Keyword Hunting → Phrase Building → Trends → GEO → Report</p>
+    <div class="badges">
+      <span class="badge bc">Keyword Hunting</span>
+      <span class="badge bg">Trends Validated</span>
+      <span class="badge bp">GEO via OpenAI</span>
+      <span class="badge bw">IMDA Framework</span>
+    </div>
+  </div>
+  <div class="inp-row" style="margin:0;">
+    <div class="inp-f"><label>Country</label><input id="i-country" value="Singapore"></div>
+    <div class="inp-f"><label>Industry</label><input id="i-industry" value="B2B Sales"></div>
+    <div class="inp-f"><label>Audience</label><input id="i-audience" value="Sales Managers, Account Managers" style="min-width:210px;"></div>
+  </div>
+</div>
+
+<!-- API BAR -->
+<div class="api-bar">
+  <label>OpenAI Key</label>
+  <input class="api-inp" id="api-key" type="password" placeholder="sk-… paste here (memory only, never saved to file)">
+  <span class="api-st no" id="api-st">⬤ Not set — GEO disabled</span>
+  <div class="api-hint">Used only for Step 03 GEO queries. Cleared when tab closes. Never written to file.</div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nav-btn active" data-p="hunting">00 · Keyword Hunting</button>
+  <button class="nav-btn" data-p="builder">01 · Phrase Builder</button>
+  <button class="nav-btn" data-p="trends">02 · Trends Validation</button>
+  <button class="nav-btn" data-p="geo">03 · GEO Research</button>
+  <button class="nav-btn" data-p="report">04 · Evidence Report</button>
+</div>
+
+<!-- PANEL 00: HUNTING -->
+<div class="panel active" id="p-hunting">
+  <div class="note note-info">
+    <strong>Step 00 — Keyword Hunting.</strong> Check which individual terms have real demand in Singapore before building phrases. Each category has batch links — click to open Google Trends with those chips compared together. Then <strong>click any chip to score it High / Medium / Low</strong>. Only High and Medium chips are available in the Phrase Builder.
+  </div>
+  <div class="hunt-stats">
+    <div><div class="stat-v" id="h-total">0</div><div class="stat-l">Total</div></div>
+    <div><div class="stat-v" id="h-high" style="color:var(--green);">0</div><div class="stat-l">High</div></div>
+    <div><div class="stat-v" id="h-med" style="color:var(--warn);">0</div><div class="stat-l">Medium</div></div>
+    <div><div class="stat-v" id="h-low" style="color:var(--danger);">0</div><div class="stat-l">Low</div></div>
+    <div><div class="stat-v" id="h-uns" style="color:var(--soft);">0</div><div class="stat-l">Unscored</div></div>
+  </div>
+  <div class="sh">Category Library</div>
+  <div class="cat-grid" id="hunt-grid"></div>
+  <div class="btn-row">
+    <button class="btn btn-g" id="promote-btn">↑ Promote High + Medium to Phrase Builder</button>
+    <button class="btn btn-s" id="reset-hunt-btn">Reset All Scores</button>
+  </div>
+</div>
+
+<!-- PANEL 01: BUILDER -->
+<div class="panel" id="p-builder">
+  <div class="note note-info">
+    <strong>Step 01 — Phrase Builder.</strong> Select chips from any category — multiple selections allowed. All combinations appear in the preview. Click <strong>Add All Phrases</strong> to add them. Low-scored chips are excluded. Auto-Generate uses only High + Medium chips with controlled pairing rules.
+  </div>
+  <div class="sh">Category Library</div>
+  <div class="cat-grid" id="builder-grid"></div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;">
+    <div class="sh" style="font-size:10px;margin-bottom:8px;">Phrase Preview — All Combinations</div>
+    <div class="phrase-prev" id="phrase-prev">Select chips from categories above…</div>
+    <div class="btn-row">
+      <button class="btn btn-c" id="add-all-btn" disabled>+ Add All Phrases</button>
+      <button class="btn btn-s" id="clear-sel-btn">Clear Selection</button>
+      <button class="btn btn-g" id="auto-btn">⚡ Auto-Generate from High + Medium</button>
+    </div>
+  </div>
+  <div class="sh">Keyword List <span id="kw-count" style="font-family:var(--mono);font-size:10px;color:var(--soft);font-weight:400;margin-left:4px;"></span></div>
+  <div class="stats-bar">
+    <div><div class="stat-v" id="s-total">0</div><div class="stat-l">Total</div></div>
+    <div><div class="stat-v" id="s-conf" style="color:var(--green);">0</div><div class="stat-l">Confirmed</div></div>
+    <div><div class="stat-v" id="s-drop" style="color:var(--danger);">0</div><div class="stat-l">Dropped</div></div>
+    <div><div class="stat-v" id="s-unr" style="color:var(--warn);">0</div><div class="stat-l">Unrated</div></div>
+  </div>
+  <div class="kw-head"><span>Keyword Phrase</span><span>Category</span><span>IMDA Level</span><span>Heat</span><span>Decision</span><span></span></div>
+  <div class="scr"><div id="kw-list"></div></div>
+  <div class="btn-row" style="margin-top:12px;">
+    <button class="btn btn-c" onclick="goTo('trends')">Go to Trends Validation →</button>
+    <button class="btn btn-s" id="clear-all-btn">Clear All Keywords</button>
+  </div>
+</div>
+
+<!-- PANEL 02: TRENDS -->
+<div class="panel" id="p-trends">
+  <div class="note note-warn">⚠️ Google Trends has no API. Each batch link opens Trends in a new tab. Keep this page open alongside it. Read the graph, return here, score each keyword.</div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;font-size:11px;color:var(--mid);line-height:1.9;">
+    <strong style="color:var(--text);">How to use:</strong><br>
+    1 → Click a batch link below — Google Trends opens in a new tab with those keywords<br>
+    2 → Set time to <strong style="color:var(--text);">Past 12 months</strong>, location <strong style="color:var(--text);">Singapore</strong><br>
+    3 → Read graph: line near top = High · middle = Medium · near zero = Low<br>
+    4 → Return here → set Heat and Decision for each keyword in that batch<br>
+    5 → After scoring all batches → click <strong style="color:var(--green);">Consolidate High Keywords</strong>
+  </div>
+  <div class="sh">Batch Links</div>
+  <div id="batch-list"><div class="empty">Add keywords in Phrase Builder first.</div></div>
+  <div class="sh" style="margin-top:18px;">Score Keywords</div>
+  <div class="kw-head"><span>Keyword Phrase</span><span>Category</span><span>IMDA Level</span><span>Heat</span><span>Decision</span><span></span></div>
+  <div class="scr"><div id="kw-list-t"></div></div>
+
+  <!-- HIGH CONSOLIDATION -->
+  <div class="hi-panel" style="margin-top:18px;">
+    <div class="sh">High Keyword Consolidation</div>
+    <div style="font-size:11px;color:var(--soft);margin-bottom:10px;">Score your keywords above. Then consolidate — only High-scored keywords appear. Pick Top N to send to GEO.</div>
+    <button class="btn btn-g" id="consolidate-btn">↑ Consolidate High Keywords</button>
+    <div id="hi-panel" style="display:none;margin-top:14px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--mid);">Select top N:</span>
+        <button class="btn btn-s top-n" data-n="10">Top 10</button>
+        <button class="btn btn-s top-n" data-n="20">Top 20</button>
+        <button class="btn btn-s top-n" data-n="30">Top 30</button>
+        <button class="btn btn-s top-n" data-n="50">Top 50</button>
+        <span id="n-label" style="font-family:var(--mono);font-size:10px;color:var(--accent);"></span>
+      </div>
+      <div id="hi-list" style="max-height:280px;overflow-y:auto;margin-bottom:10px;"></div>
+      <button class="btn btn-p" id="send-geo-btn" disabled>▶ Send to GEO →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL 03: GEO -->
+<div class="panel" id="p-geo">
+  <div class="note note-info">GEO questions are sent to <strong>OpenAI GPT-4o</strong> live. Questions are built around your confirmed high keywords. Enter your API key above to enable.</div>
+  <div class="geo-kws-bar" id="geo-kws-bar">No keywords sent to GEO yet. Complete Trends Validation → Consolidate → Send to GEO.</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+    <span style="font-family:var(--mono);font-size:10px;color:var(--soft);" id="geo-prog">0 / 16 completed</span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-p" id="run-all-btn">▶ Run All Questions</button>
+      <button class="btn btn-s" id="clear-geo-btn">Clear Responses</button>
+    </div>
+  </div>
+  <div id="geo-qs"></div>
+  <div class="btn-row" style="margin-top:12px;">
+    <button class="btn btn-w" onclick="goTo('report')">Go to Evidence Report →</button>
+  </div>
+</div>
+
+<!-- PANEL 04: REPORT -->
+<div class="panel" id="p-report">
+  <div class="btn-row" style="margin-bottom:16px;">
+    <button class="btn btn-c" id="gen-report-btn">↻ Generate Report</button>
+    <button class="btn btn-s" id="copy-btn">Copy Export</button>
+  </div>
+  <div class="r-sec"><h3>Section 1 — Validated Keywords</h3><div id="r-kw"></div></div>
+  <div class="r-sec"><h3>Section 2 — IMDA Competency Distribution</h3><div class="imda-chart" id="r-imda"></div><div id="r-imda-tbl"></div></div>
+  <div class="r-sec"><h3>Section 3 — GEO Findings</h3><div id="r-geo"></div></div>
+  <div class="r-sec"><h3>Section 4 — Market Gaps</h3><div id="r-gaps"></div></div>
+  <div class="r-sec"><h3>Section 5 — Recommendations</h3><div id="r-recs"></div></div>
+  <div class="r-sec"><h3>Export</h3><textarea class="exp-area" id="exp-area" readonly placeholder="Click Generate Report above."></textarea></div>
+</div>
+
+</div><!-- shell -->
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────
+let OPENAI_KEY = "";
+
+// ─── IMDA ─────────────────────────────────────────────────
+const IMDA = {
+  "Digital Literacy": { css:"sp1", color:"#60a5fa", desc:"Basic digital skills, surface AI awareness" },
+  "AI Awareness":     { css:"sp2", color:"#a78bfa", desc:"Understanding what AI is and its potential" },
+  "AI Application":   { css:"sp3", color:"#10b981", desc:"Using AI tools in real workflows" },
+  "AI Development":   { css:"sp4", color:"#fb923c", desc:"Building and deploying AI solutions" }
+};
+
+// ─── TAXONOMY ─────────────────────────────────────────────
+const DEFAULT_TAX = [
+  { id:"ai",   icon:"🧠", color:"#00e5ff", title:"AI Technology Terms",        imda:"AI Awareness",
+    chips:["AI","Machine Learning","Generative AI","LLM","Neural Network","Deep Learning","NLP"] },
+  { id:"ag",   icon:"⚡", color:"#a78bfa", title:"Agentic Terms",              imda:"AI Development",
+    chips:["Agentic AI","AI Agent","Autonomous AI","AI Workflow","AI Automation","AI Pipeline"] },
+  { id:"gpt",  icon:"🤖", color:"#f59e0b", title:"GPT / Model Brands",         imda:"AI Application",
+    chips:["ChatGPT","Claude","Gemini","Copilot","OpenAI","GPT-4","Perplexity"] },
+  { id:"fmt",  icon:"📚", color:"#10b981", title:"Training Format",            imda:"AI Awareness",
+    chips:["Course","Workshop","Certification","Bootcamp","Training","Programme","Masterclass"] },
+  { id:"atc",  icon:"🏫", color:"#fb923c", title:"Authorised Training Centres", imda:"AI Application",
+    chips:["NTUC","LearningHub","SMF","CCL","Kaplan","Coursera","Google"] },
+  { id:"fund", icon:"💰", color:"#34d399", title:"Funding / Policy",           imda:"Digital Literacy",
+    chips:["SkillsFuture","WSQ","EWTP","SkillsFuture Credit","IMDA","SSG","Subsidy"] },
+  { id:"role", icon:"👔", color:"#60a5fa", title:"Job Role",                   imda:"AI Awareness",
+    chips:["Sales Manager","Account Manager","Business Leader","B2B Sales","Sales Director","CRO"] },
+  { id:"out",  icon:"🎯", color:"#f472b6", title:"Outcome / Pain",             imda:"AI Application",
+    chips:["Sales Productivity","Lead Generation","Proposal Writing","Quota","Pipeline","Revenue","Prospecting"] }
+];
+
+function loadTax() {
+  try { const s=localStorage.getItem("tax_v3"); if(s) return JSON.parse(s); } catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_TAX));
+}
+function saveTax() { try { localStorage.setItem("tax_v3",JSON.stringify(TAX)); } catch(e){} }
+
+let TAX = loadTax();
+
+// ─── STATE ────────────────────────────────────────────────
+let chipScores = {};  // "catId:chip" → "high"|"medium"|"low"
+let selectedTokens = {}; // catId → Set of selected chips
+let keywords = [];
+let geoKeywords = [];
+let geoResponses = {};
+let selectedN = 10;
+
+function loadState() {
+  try {
+    const cs = localStorage.getItem("cs_v3"); if(cs) chipScores = JSON.parse(cs);
+    const kw = localStorage.getItem("kw_v3"); if(kw) keywords = JSON.parse(kw);
+  } catch(e){}
+}
+function saveCS() { try { localStorage.setItem("cs_v3",JSON.stringify(chipScores)); } catch(e){} }
+function saveKW() { try { localStorage.setItem("kw_v3",JSON.stringify(keywords)); } catch(e){} }
+
+function getScore(catId, chip) { return chipScores[catId+":"+chip] || ""; }
+function setScore(catId, chip, val) {
+  const key = catId+":"+chip;
+  if(val) chipScores[key]=val; else delete chipScores[key];
+  saveCS();
+}
+
+// ─── GEO QUESTIONS ────────────────────────────────────────
+function buildGeoQs() {
+  const c = v("i-country"), i = v("i-industry"), a = v("i-audience");
+  const kl = geoKeywords.length ? geoKeywords.map(k=>k.phrase).join(", ") : `AI training for ${i}`;
+  const top3 = geoKeywords.slice(0,3).map(k=>k.phrase).join(", ") || `AI ${i} Course ${c}`;
+  return [
+    `In ${c}, what AI training courses for ${i} professionals are currently recommended by experts or institutions?`,
+    `Which authorised training centres in ${c} offer AI courses for ${a}?`,
+    `What is the difference between AI and Agentic AI — and which should ${a} in ${c} learn first?`,
+    `For someone in ${c} searching "${top3}" — what competency level are they at and what do they need?`,
+    `What competency gap exists between someone searching basic AI terms versus Agentic AI workflow terms in ${c}?`,
+    `Which SkillsFuture or WSQ-funded AI courses in ${c} match these search terms: ${kl}?`,
+    `What are the most common objections ${a} in ${c} have before investing in AI training?`,
+    `Which AI tools — ChatGPT, Claude, Gemini, Copilot — are most used by ${i} teams in ${c}?`,
+    `What outcomes can ${a} in ${c} expect 90 days after completing AI training for ${i}?`,
+    `Who are the leading competitors offering AI training for ${i} professionals in ${c}?`,
+    `What does Agentic AI mean for ${i} in ${c} and which workflows does it automate?`,
+    `What makes an AI training programme feel locally relevant to ${c} ${i} teams vs generic global content?`,
+    `What are the rising AI search trends for ${i} in ${c} in 2025–2026 beyond: ${kl}?`,
+    `What one-sentence value proposition covers the intent behind: ${top3}?`,
+    `Which IMDA AI competency level has the strongest demand from ${a} in ${c} right now?`,
+    `Which AI subtopics are growing fastest among ${i} professionals in ${c} NOT yet in this list: ${kl}?`
+  ];
+}
+
+// ─── HELPERS ──────────────────────────────────────────────
+function v(id) { return (document.getElementById(id)||{}).value || ""; }
+function $(id) { return document.getElementById(id); }
+function getGeo(country) {
+  const m={"singapore":"SG","malaysia":"MY","indonesia":"ID","thailand":"TH","vietnam":"VN","philippines":"PH","india":"IN","australia":"AU","united states":"US","usa":"US","united kingdom":"GB","uk":"GB"};
+  return m[(country||"").toLowerCase()]||"SG";
+}
+function getIMDA(catId) {
+  const cat = TAX.find(t=>t.id===catId);
+  return IMDA[cat?.imda] || IMDA["AI Awareness"];
+}
+
+// ─── HUNTING ──────────────────────────────────────────────
+function renderHuntGrid() {
+  const country = v("i-country")||"Singapore";
+  const geo = getGeo(country);
+  const grid = $("hunt-grid");
+  grid.innerHTML = TAX.map(cat => {
+    // Build batch links
+    const batchSize = 5;
+    const batches = [];
+    for(let b=0;b<cat.chips.length;b+=batchSize){
+      const bc = cat.chips.slice(b,b+batchSize);
+      const p = new URLSearchParams({geo, q:bc.join(",")});
+      batches.push({n:Math.floor(b/batchSize)+1, chips:bc, url:"https://trends.google.com/trends/explore?"+p.toString()});
+    }
+    const batchHTML = batches.map(bt=>
+      `<div class="batch-link-row">
+        <a class="t-link" href="${bt.url}" target="_blank" rel="noopener">Batch ${bt.n} ↗</a>
+        <span class="batch-terms">${bt.chips.join(" · ")}</span>
+       </div>`
+    ).join("");
+
+    const chipsHTML = cat.chips.map(chip=>{
+      const sc = getScore(cat.id,chip);
+      const cls = sc ? sc==="high"?"h":sc==="medium"?"m":"lo" : "";
+      const tag = sc ? `<span class="sc">${sc.toUpperCase()}</span>` : "";
+      return `<span class="chip ${cls}" onclick="showMenu(event,'${cat.id}','${chip.replace(/'/g,"\\'")}')">
+        ${chip}${tag}<span class="rm" onclick="event.stopPropagation();removeChip('${cat.id}','${chip.replace(/'/g,"\\'")}')">×</span>
+      </span>`;
+    }).join("");
+
+    return `<div class="cat-card">
+      <div class="cat-head">
+        <div class="cat-title-wrap">
+          <div class="cat-icon" style="background:${cat.color}18;border:1px solid ${cat.color}33;">${cat.icon}</div>
+          <div>
+            <div class="cat-title" style="color:${cat.color};">${cat.title}</div>
+            <div class="cat-imda">${cat.imda}</div>
+          </div>
+        </div>
+      </div>
+      <div class="batch-links">${batchHTML}</div>
+      <div class="chips">${chipsHTML}</div>
+      <div class="add-row">
+        <input class="add-inp" id="hadd-${cat.id}" placeholder="Add keyword…" onkeydown="if(event.key==='Enter')addHuntChip('${cat.id}')">
+        <button class="add-btn" onclick="addHuntChip('${cat.id}')">+ Add</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  updateHuntStats();
+}
+
+function addHuntChip(catId) {
+  const inp = $("hadd-"+catId);
+  const val = inp?.value.trim();
+  if(!val) return;
+  const cat = TAX.find(t=>t.id===catId);
+  if(cat && !cat.chips.includes(val)) { cat.chips.push(val); saveTax(); }
+  inp.value="";
+  renderHuntGrid();
+  renderBuilderGrid();
+}
+
+function removeChip(catId, val) {
+  const cat = TAX.find(t=>t.id===catId);
+  if(cat) cat.chips = cat.chips.filter(c=>c!==val);
+  delete chipScores[catId+":"+val];
+  saveTax(); saveCS();
+  renderHuntGrid();
+  renderBuilderGrid();
+}
+
+let activeMenu = null;
+function showMenu(e, catId, chip) {
+  e.stopPropagation();
+  if(activeMenu){activeMenu.remove();activeMenu=null;}
+  const menu = document.createElement("div");
+  menu.className = "score-menu";
+  menu.style.cssText = `left:${e.clientX}px;top:${e.clientY}px;`;
+  [["🔥 High","high","#10b981"],["⚡ Medium","medium","#f59e0b"],["📉 Low","low","#ef4444"],["✕ Clear","","#64748b"]].forEach(([lbl,val,col])=>{
+    const btn = document.createElement("button");
+    btn.textContent=lbl; btn.style.color=col;
+    btn.onclick=ev=>{ev.stopPropagation();setScore(catId,chip,val);menu.remove();activeMenu=null;renderHuntGrid();renderBuilderGrid();updateHuntStats();};
+    menu.appendChild(btn);
+  });
+  document.body.appendChild(menu);
+  activeMenu=menu;
+  setTimeout(()=>{
+    document.addEventListener("click",function close(){menu.remove();activeMenu=null;document.removeEventListener("click",close);},{once:true});
+  },0);
+}
+
+function updateHuntStats() {
+  let total=0,high=0,med=0,low=0;
+  TAX.forEach(cat=>cat.chips.forEach(chip=>{
+    total++;
+    const s=getScore(cat.id,chip);
+    if(s==="high")high++;else if(s==="medium")med++;else if(s==="low")low++;
+  }));
+  $("h-total").textContent=total; $("h-high").textContent=high;
+  $("h-med").textContent=med; $("h-low").textContent=low;
+  $("h-uns").textContent=total-high-med-low;
+}
+
+// ─── BUILDER ──────────────────────────────────────────────
+function renderBuilderGrid() {
+  const grid = $("builder-grid");
+  grid.innerHTML = TAX.map(cat=>{
+    const chipsHTML = cat.chips.map(c=>{
+      const sc = getScore(cat.id,c);
+      const isLow = sc==="low";
+      const cls = isLow?"lo":sc==="high"?"h":sc==="medium"?"m":"";
+      const sel = (selectedTokens[cat.id]||new Set()).has(c)?"sel":"";
+      const tag = sc?`<span class="sc">${sc==="high"?"HIGH":sc==="medium"?"MED":"LOW"}</span>`:"";
+      const ptr = isLow?"pointer-events:none;":"";
+      return `<span class="chip ${cls} ${sel}" style="${ptr}" data-cat="${cat.id}" data-val="${c}">${c}${tag}<span class="rm" data-cat="${cat.id}" data-val="${c}">×</span></span>`;
+    }).join("");
+    return `<div class="cat-card">
+      <div class="cat-head">
+        <div class="cat-title-wrap">
+          <div class="cat-icon" style="background:${cat.color}18;border:1px solid ${cat.color}33;">${cat.icon}</div>
+          <div><div class="cat-title" style="color:${cat.color};">${cat.title}</div><div class="cat-imda">${cat.imda}</div></div>
+        </div>
+      </div>
+      <div class="chips">${chipsHTML}</div>
+      <div class="add-row">
+        <input class="add-inp" id="badd-${cat.id}" placeholder="Add custom term…" onkeydown="if(event.key==='Enter')addBuilderChip('${cat.id}')">
+        <button class="add-btn" onclick="addBuilderChip('${cat.id}')">+ Add</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  // Chip click for selection
+  grid.querySelectorAll(".chip").forEach(chip=>{
+    chip.addEventListener("click",e=>{
+      if(e.target.classList.contains("rm")){
+        e.stopPropagation();
+        removeChip(e.target.dataset.cat,e.target.dataset.val);
+        return;
+      }
+      const cat=chip.dataset.cat, val=chip.dataset.val;
+      if(getScore(cat,val)==="low") return;
+      if(!selectedTokens[cat]) selectedTokens[cat]=new Set();
+      if(selectedTokens[cat].has(val)){selectedTokens[cat].delete(val);if(!selectedTokens[cat].size)delete selectedTokens[cat];}
+      else selectedTokens[cat].add(val);
+      updatePreview();
+      renderBuilderGrid();
+    });
+  });
+}
+
+function addBuilderChip(catId) {
+  const inp = $("badd-"+catId);
+  const val = inp?.value.trim();
+  if(!val) return;
+  const cat = TAX.find(t=>t.id===catId);
+  if(cat && !cat.chips.includes(val)){cat.chips.push(val);saveTax();}
+  inp.value="";
+  renderBuilderGrid();
+  renderHuntGrid();
+}
+
+// Combinations
+function buildCombos() {
+  const country = v("i-country")||"Singapore";
+  const cats = Object.entries(selectedTokens).filter(([,s])=>s.size>0);
+  if(!cats.length) return [];
+  let combos=[[]];
+  cats.forEach(([catId,valSet])=>{
+    const next=[];
+    combos.forEach(ex=>Array.from(valSet).forEach(v=>next.push([...ex,{catId,val:v}])));
+    combos=next;
+  });
+  return combos.map(tokens=>({
+    phrase:tokens.map(t=>t.val).join(" ")+" "+country,
+    trendPhrase:tokens.map(t=>t.val).slice(0,3).join(" "),
+    primaryCatId:tokens[0].catId
+  }));
+}
+
+function updatePreview() {
+  const combos = buildCombos();
+  const prev = $("phrase-prev");
+  const btn = $("add-all-btn");
+  if(!combos.length){
+    prev.innerHTML="Select chips from categories above…";
+    btn.disabled=true; btn.textContent="+ Add All Phrases";
+  } else {
+    prev.innerHTML=combos.map(c=>`<span class="combo">• ${c.phrase}</span>`).join("");
+    btn.disabled=false; btn.textContent=`+ Add All ${combos.length} Phrase${combos.length>1?"s":""}`;
+  }
+}
+
+function addAllPhrases() {
+  const combos=buildCombos();
+  if(!combos.length) return;
+  const existing=new Set(keywords.map(k=>k.phrase));
+  combos.forEach(combo=>{
+    if(existing.has(combo.phrase)) return;
+    const imda=getIMDA(combo.primaryCatId);
+    const cat=TAX.find(t=>t.id===combo.primaryCatId);
+    keywords.push({
+      id:"kw"+Date.now()+Math.random().toString(36).slice(2),
+      phrase:combo.phrase, trendPhrase:combo.trendPhrase,
+      category:cat?.title||combo.primaryCatId, catId:combo.primaryCatId,
+      imda:cat?.imda||"AI Awareness", heat:"", decision:""
+    });
+    existing.add(combo.phrase);
+  });
+  selectedTokens={};
+  saveKW(); updatePreview(); renderBuilderGrid(); renderKwList(); renderBatches(); updateKwStats();
+}
+
+function autoGenerate() {
+  // Check if any chips scored
+  const valid={};
+  let anyScored=false;
+  TAX.forEach(cat=>{
+    const good=cat.chips.filter(c=>{const s=getScore(cat.id,c);return s==="high"||s==="medium";});
+    if(good.length){valid[cat.id]=good;anyScored=true;}
+  });
+
+  if(!anyScored){
+    alert("No chips scored yet.\n\nGo to Step 00 · Keyword Hunting first.\nScore chips High or Medium after checking Google Trends.");
+    return;
+  }
+
+
+
+  const c = v("i-country")||"Singapore";
+  const aiC   = valid["ai"]   ||[];
+  const agC   = valid["ag"]   ||[];
+  const gptC  = valid["gpt"]  ||[];
+  const fmtC  = valid["fmt"]  ||[];
+  const roleC = valid["role"] ||[];
+  const outC  = valid["out"]  ||[];
+  const fundC = valid["fund"] ||[];
+  const atcC  = valid["atc"]  ||[];
+
+  const phrases=[];
+
+  // Helper — get best heat from two chips (primary category chip drives the heat)
+  function chipHeat(catId, chip) { const s=getScore(catId,chip); return s==="high"?"high":s==="medium"?"medium":""; }
+
+  // RULE 1: AI Tech + Format — heat driven by AI chip
+  aiC.forEach(ai=>fmtC.forEach(fmt=>phrases.push({phrase:`${ai} ${fmt} ${c}`,catId:"ai",imda:"AI Awareness",heat:chipHeat("ai",ai)})));
+  // RULE 2: AI Tech + Role
+  aiC.forEach(ai=>roleC.forEach(r=>phrases.push({phrase:`${ai} for ${r} ${c}`,catId:"ai",imda:"AI Awareness",heat:chipHeat("ai",ai)})));
+  // RULE 3: Agentic + Format
+  agC.forEach(ag=>fmtC.forEach(fmt=>phrases.push({phrase:`${ag} ${fmt} ${c}`,catId:"ag",imda:"AI Development",heat:chipHeat("ag",ag)})));
+  // RULE 4: Agentic + Outcome
+  agC.forEach(ag=>outC.forEach(o=>phrases.push({phrase:`${ag} ${o} ${c}`,catId:"ag",imda:"AI Development",heat:chipHeat("ag",ag)})));
+  // RULE 5: GPT Brand + Format
+  gptC.forEach(g=>fmtC.forEach(fmt=>phrases.push({phrase:`${g} ${fmt} ${c}`,catId:"gpt",imda:"AI Application",heat:chipHeat("gpt",g)})));
+  // RULE 6: GPT Brand + Role
+  gptC.forEach(g=>roleC.forEach(r=>phrases.push({phrase:`${g} for ${r} ${c}`,catId:"gpt",imda:"AI Application",heat:chipHeat("gpt",g)})));
+  // RULE 7: Funding standalone
+  fundC.forEach(f=>phrases.push({phrase:`${f} AI Course ${c}`,catId:"fund",imda:"Digital Literacy",heat:chipHeat("fund",f)}));
+  // RULE 8: ATC standalone
+  atcC.forEach(a=>phrases.push({phrase:`${a} AI Course ${c}`,catId:"atc",imda:"AI Application",heat:chipHeat("atc",a)}));
+  // RULE 9: Outcome standalone
+  outC.forEach(o=>phrases.push({phrase:`AI for ${o} ${c}`,catId:"out",imda:"AI Application",heat:chipHeat("out",o)}));
+
+  if(!phrases.length){alert("No phrases generated. Score more chips High or Medium.");return;}
+
+  // Update heat on any existing keywords that match generated phrases
+  phrases.forEach(item=>{
+    const existing_kw = keywords.find(k=>k.phrase===item.phrase);
+    if(existing_kw && !existing_kw.heat && item.heat) {
+      existing_kw.heat = item.heat;
+    }
+  });
+
+  const existing=new Set(keywords.map(k=>k.phrase));
+  let added=0;
+  phrases.forEach(item=>{
+    if(existing.has(item.phrase)) return;
+    const cat=TAX.find(t=>t.id===item.catId);
+    keywords.push({
+      id:"kw"+Date.now()+Math.random().toString(36).slice(2),
+      phrase:item.phrase, trendPhrase:item.phrase.split(" ").slice(0,3).join(" "),
+      category:cat?.title||item.catId, catId:item.catId,
+      imda:item.imda, heat:item.heat||"", decision:""
+    });
+    existing.add(item.phrase);
+    added++;
+  });
+
+  saveKW(); renderKwList(); renderBatches(); updateKwStats();
+  alert(`✅ Generated ${added} phrases from High + Medium chips.\nControlled pairing rules applied.`);
+}
+
+// ─── KEYWORD LIST ──────────────────────────────────────────
+function kwRowHTML(k) {
+  const imda = IMDA[k.imda]||IMDA["AI Awareness"];
+  return `<div class="kw-row ${k.decision==="confirmed"?"confirmed":k.decision==="drop"?"dropped":""}">
+    <div><div class="kw-text">${k.phrase}</div><div class="kw-sub">${k.category}</div></div>
+    <div class="kw-sub">${k.category}</div>
+    <div><span class="sp ${imda.css}">${k.imda}</span></div>
+    <div><select class="kw-sel" onchange="setHeat('${k.id}',this.value)">
+      <option value="">Heat…</option>
+      <option value="high" ${k.heat==="high"?"selected":""}>🔥 High</option>
+      <option value="medium" ${k.heat==="medium"?"selected":""}>⚡ Medium</option>
+      <option value="low" ${k.heat==="low"?"selected":""}>📉 Low</option>
+    </select></div>
+    <div><select class="kw-sel" onchange="setDecision('${k.id}',this.value)">
+      <option value="">Decide…</option>
+      <option value="confirmed" ${k.decision==="confirmed"?"selected":""}>✅ Confirm</option>
+      <option value="drop" ${k.decision==="drop"?"selected":""}>❌ Drop</option>
+    </select></div>
+    <div><button class="del" onclick="delKw('${k.id}')">×</button></div>
+  </div>`;
+}
+
+function renderKwList() {
+  const html = keywords.length ? keywords.map(kwRowHTML).join("") : '<div class="empty">No keywords yet.</div>';
+  $("kw-list").innerHTML = html;
+  $("kw-list-t").innerHTML = html;
+  $("kw-count").textContent = `${keywords.length} keyword${keywords.length!==1?"s":""}`;
+}
+
+function setHeat(id,val) {
+  const k=keywords.find(x=>x.id===id); if(k){k.heat=val;saveKW();updateKwStats();}
+  document.querySelectorAll(`[onchange*="setHeat('${id}')"]`).forEach(s=>s.value=val);
+}
+
+function setDecision(id,val) {
+  const k=keywords.find(x=>x.id===id); if(k){k.decision=val;saveKW();renderKwList();updateKwStats();}
+}
+
+function delKw(id) {
+  keywords=keywords.filter(k=>k.id!==id); saveKW(); renderKwList(); renderBatches(); updateKwStats();
+}
+
+function updateKwStats() {
+  $("s-total").textContent=keywords.length;
+  $("s-conf").textContent=keywords.filter(k=>k.decision==="confirmed").length;
+  $("s-drop").textContent=keywords.filter(k=>k.decision==="drop").length;
+  $("s-unr").textContent=keywords.filter(k=>!k.decision).length;
+}
+
+// ─── TRENDS BATCHES ───────────────────────────────────────
+function renderBatches() {
+  const container=$("batch-list");
+  container.innerHTML="";
+  if(!keywords.length){container.innerHTML='<div class="empty">Add keywords in Phrase Builder first.</div>';return;}
+  const geo=getGeo(v("i-country"));
+  const size=3;
+  for(let i=0;i<keywords.length;i+=size){
+    const batch=keywords.slice(i,i+size);
+    const q=batch.map(k=>k.trendPhrase).join(",");
+    const p=new URLSearchParams({geo,q});
+    const url="https://trends.google.com/trends/explore?"+p.toString();
+    const row=document.createElement("div"); row.className="b-row";
+    const num=document.createElement("div"); num.className="b-num"; num.textContent=`Batch ${Math.floor(i/size)+1}`;
+    const terms=document.createElement("div"); terms.className="b-terms"; terms.textContent=batch.map(k=>k.trendPhrase).join(" · ");
+    const link=document.createElement("a"); link.className="t-link"; link.href=url; link.target="_blank"; link.rel="noopener noreferrer"; link.textContent="Open Trends ↗";
+    row.appendChild(num); row.appendChild(terms); row.appendChild(link);
+    container.appendChild(row);
+  }
+}
+
+// ─── HIGH CONSOLIDATION ───────────────────────────────────
+function consolidate() {
+  const highKws=keywords.filter(k=>k.heat==="high");
+  const panel=$("hi-panel");
+  panel.style.display="block";
+  applyTopN(selectedN, highKws);
+}
+
+function applyTopN(n, highKws) {
+  selectedN=n;
+  const allHigh=highKws||keywords.filter(k=>k.heat==="high");
+  const top=allHigh.slice(0,n);
+  geoKeywords=top;
+  document.querySelectorAll(".top-n").forEach(b=>{
+    b.classList.toggle("btn-c",parseInt(b.dataset.n)===n);
+    b.classList.toggle("btn-s",parseInt(b.dataset.n)!==n);
+  });
+  $("n-label").textContent=`${top.length} of ${allHigh.length} high keywords selected`;
+  const list=$("hi-list");
+  const btn=$("send-geo-btn");
+  if(!top.length){list.innerHTML='<div class="empty">No High-scored keywords yet.</div>';btn.disabled=true;return;}
+  list.innerHTML=top.map((k,i)=>{
+    const imda=IMDA[k.imda]||IMDA["AI Awareness"];
+    return `<div class="hi-row"><div class="hi-num">#${i+1}</div><div style="flex:1;font-size:11px;">${k.phrase}</div><span class="sp ${imda.css}">${k.imda}</span><span style="font-family:var(--mono);font-size:9px;color:#f97316;">🔥 High</span></div>`;
+  }).join("");
+  btn.disabled=false;
+}
+
+function sendToGeo() {
+  if(!geoKeywords.length) return;
+  const bar=$("geo-kws-bar");
+  bar.innerHTML=`<strong style="color:var(--green);">✅ ${geoKeywords.length} keywords loaded:</strong> <span style="font-family:var(--mono);font-size:10px;">${geoKeywords.map(k=>k.phrase).join(" · ")}</span>`;
+  geoResponses={};
+  goTo("geo");
+  renderGeoPanel();
+}
+
+// ─── GEO ──────────────────────────────────────────────────
+function renderGeoPanel() {
+  const qs=buildGeoQs();
+  $("geo-qs").innerHTML=qs.map((q,i)=>`
+    <div class="geo-q">
+      <div class="geo-num">${String(i+1).padStart(2,"0")}</div>
+      <div class="geo-body">
+        <div class="geo-qt ${i===2||i===4||i===14?"hl":""}">${q}</div>
+        <div class="geo-resp ${geoResponses[i]?"show":""}" id="gr-${i}">${geoResponses[i]||""}</div>
+      </div>
+      <button class="run-btn" id="rb-${i}" onclick="runGeo(${i},${JSON.stringify(q)})">▶ Run</button>
+    </div>`).join("");
+  updateGeoProg();
+}
+
+async function runGeo(idx, question) {
+  if(!OPENAI_KEY){alert("Enter your OpenAI API key at the top of the page.");return;}
+  const resp=$("gr-"+idx), btn=$("rb-"+idx);
+  resp.classList.add("show"); resp.innerHTML='<span class="geo-load">Querying GPT-4o…</span>';
+  if(btn) btn.disabled=true;
+  try {
+    const res=await fetch("https://api.openai.com/v1/chat/completions",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+OPENAI_KEY},
+      body:JSON.stringify({model:"gpt-4o",max_tokens:500,messages:[
+        {role:"system",content:"You are a market research analyst specialising in Singapore B2B Sales AI training. Answer concisely and factually in under 180 words. Focus on specific providers, trends, and language used by the target audience."},
+        {role:"user",content:question}
+      ]})
+    });
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message);
+    const text=data.choices?.[0]?.message?.content||"No response.";
+    geoResponses[idx]=text; resp.innerHTML=text;
+  } catch(err) {
+    resp.innerHTML=`<span style="color:var(--danger);">Error: ${err.message}</span>`;
+  }
+  if(btn) btn.disabled=false;
+  updateGeoProg();
+}
+
+async function runAllGeo() {
+  const btn=$("run-all-btn");
+  btn.disabled=true; btn.textContent="Running…";
+  const qs=buildGeoQs();
+  for(let i=0;i<qs.length;i++){await runGeo(i,qs[i]);await new Promise(r=>setTimeout(r,600));}
+  btn.disabled=false; btn.textContent="▶ Run All Questions";
+}
+
+function updateGeoProg() {
+  const total=buildGeoQs().length;
+  $("geo-prog").textContent=`${Object.keys(geoResponses).length} / ${total} completed`;
+}
+
+// ─── REPORT ───────────────────────────────────────────────
+function generateReport() {
+  const c=v("i-country"),i=v("i-industry"),a=v("i-audience");
+  const confirmed=keywords.filter(k=>k.decision==="confirmed");
+  const dropped=keywords.filter(k=>k.decision==="drop");
+  const qs=buildGeoQs();
+
+  // S1 keywords
+  $("r-kw").innerHTML=confirmed.length?`<table class="rtbl"><thead><tr><th>#</th><th>Keyword Phrase</th><th>Category</th><th>IMDA Level</th><th>Heat</th><th>GEO Signal</th></tr></thead><tbody>
+    ${confirmed.map((k,idx)=>{
+      const imda=IMDA[k.imda]||IMDA["AI Awareness"];
+      const geo=Object.values(geoResponses).some(r=>r.toLowerCase().includes(k.phrase.toLowerCase().split(" ")[0]))?"✅ Mentioned":"—";
+      return `<tr><td>${idx+1}</td><td style="color:var(--text);">${k.phrase}</td><td>${k.category}</td><td><span class="sp ${imda.css}">${k.imda}</span></td><td style="color:${k.heat==="high"?"#f97316":k.heat==="medium"?"#facc15":"var(--green)"};">${k.heat==="high"?"🔥 High":k.heat==="medium"?"⚡ Medium":"📉 Low"}</td><td>${geo}</td></tr>`;
+    }).join("")}</tbody></table>`:'<div class="empty">No confirmed keywords yet.</div>';
+
+  // S2 IMDA chart
+  const counts={"Digital Literacy":0,"AI Awareness":0,"AI Application":0,"AI Development":0};
+  confirmed.forEach(k=>{if(counts[k.imda]!==undefined)counts[k.imda]++;});
+  const maxC=Math.max(...Object.values(counts),1);
+  $("r-imda").innerHTML=Object.entries(counts).map(([lv,cnt])=>{
+    const im=IMDA[lv]; const h=Math.max(Math.round((cnt/maxC)*120),cnt>0?8:0);
+    return `<div class="imda-wrap"><div class="imda-bg"><div class="imda-fill" style="height:${h}px;background:${im.color}22;border-top:2px solid ${im.color};">${cnt>0?`<span style="font-size:16px;font-weight:800;color:${im.color};">${cnt}</span>`:""}</div></div><div class="imda-lbl" style="color:${im.color};">${lv}</div><div class="imda-sub">${im.desc}</div></div>`;
+  }).join("");
+
+  $("r-imda-tbl").innerHTML=`<table class="rtbl" style="margin-top:12px;"><thead><tr><th>IMDA Level</th><th>Description</th><th>Keywords</th><th>Signal</th></tr></thead><tbody>${Object.entries(counts).map(([lv,cnt])=>{
+    const im=IMDA[lv];
+    const sig=cnt===0?"No demand confirmed":cnt>=maxC?"Strongest demand":cnt>1?"Moderate demand":"Weak demand";
+    return `<tr><td><span class="sp ${im.css}">${lv}</span></td><td>${im.desc}</td><td style="text-align:center;font-family:var(--mono);color:var(--accent);">${cnt}</td><td style="color:${cnt===0?"var(--soft)":cnt>=maxC?"var(--green)":"var(--warn)"};">${sig}</td></tr>`;
+  }).join("")}</tbody></table>`;
+
+  // S3 GEO
+  const geoKeys=Object.keys(geoResponses);
+  $("r-geo").innerHTML=geoKeys.length?geoKeys.map(idx=>`<div style="margin-bottom:10px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;"><div style="font-family:var(--mono);font-size:9px;color:var(--soft);margin-bottom:5px;">Q${parseInt(idx)+1}: ${qs[idx]}</div><div style="font-size:11px;color:var(--mid);line-height:1.6;white-space:pre-wrap;">${geoResponses[idx]}</div></div>`).join(""):'<div class="empty">No GEO responses yet.</div>';
+
+  // S4 Gaps
+  const gaps=[];
+  if(dropped.length) gaps.push(`${dropped.length} keyword(s) dropped — no confirmed Trends demand: ${dropped.map(k=>k.phrase).join(", ")}`);
+  if(!counts["AI Development"]) gaps.push("No confirmed demand at AI Development level — Agentic AI topics may be ahead of market readiness");
+  if(!counts["Digital Literacy"]) gaps.push("No confirmed demand at Digital Literacy level — funding/policy terms may have low organic search volume");
+  if(geoKeys.length<8) gaps.push("GEO research incomplete — run all 16 questions for full market picture");
+  $("r-gaps").innerHTML=gaps.length?gaps.map(g=>`<div class="gap-item"><div class="dot-r"></div><div>${g}</div></div>`).join(""):'<div class="empty">No significant gaps identified.</div>';
+
+  // S5 Recs
+  const recs=[];
+  const hot=confirmed.filter(k=>k.heat==="high");
+  if(hot.length) recs.push(`Use high-demand keywords in programme titles and landing pages: ${hot.map(k=>k.phrase).join(", ")}`);
+  const dom=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  if(dom[1]>0) recs.push(`Strongest confirmed demand is at <strong>${dom[0]}</strong> level — position entry content here first`);
+  if(counts["AI Development"]>0) recs.push("Agentic AI demand confirmed — build a separate content stream for AI Development audience");
+  recs.push(`GEO priority: create content that directly answers the 16 GEO questions — these are what AI engines are being asked about AI training in ${c}`);
+  recs.push("Run this research quarterly — AI search behaviour in Singapore evolves rapidly");
+  $("r-recs").innerHTML=recs.map(r=>`<div class="rec-item"><div class="dot-g"></div><div>${r}</div></div>`).join("");
+
+  // Export
+  const lines=[
+    `AI DEMAND RESEARCH REPORT — v3`,`Country:${c} | Industry:${i} | Audience:${a}`,`Date:${new Date().toLocaleDateString()}`,``,
+    `=== SECTION 1: VALIDATED KEYWORDS (${confirmed.length}) ===`,
+    ...confirmed.map((k,idx)=>`${idx+1}. [${k.imda}] [${k.heat||"unrated"}] ${k.phrase}`),``,
+    `DROPPED: ${dropped.map(k=>k.phrase).join(", ")||"None"}`,``,
+    `=== SECTION 2: IMDA DISTRIBUTION ===`,
+    ...Object.entries(counts).map(([l,c])=>`${l}: ${c} keywords`),``,
+    `=== SECTION 3: GEO FINDINGS (${geoKeys.length}/16) ===`,
+    ...geoKeys.map(idx=>`\nQ${parseInt(idx)+1}: ${qs[idx]}\n${geoResponses[idx]}`),``,
+    `=== SECTION 4: GAPS ===`,...gaps.map(g=>`- ${g}`),``,
+    `=== SECTION 5: RECOMMENDATIONS ===`,...recs.map(r=>`- ${r.replace(/<[^>]+>/g,"")}`)
+  ];
+  $("exp-area").value=lines.join("\n");
+}
+
+// ─── NAV ──────────────────────────────────────────────────
+function goTo(panel) {
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.p===panel));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.id==="p-"+panel));
+  if(panel==="hunting"){renderHuntGrid();updateHuntStats();}
+  if(panel==="builder"){renderBuilderGrid();updatePreview();}
+  if(panel==="trends"){renderBatches();renderKwList();}
+  if(panel==="geo"){renderGeoPanel();}
+  if(panel==="report"){generateReport();}
+}
+
+document.querySelectorAll(".nav-btn").forEach(b=>b.addEventListener("click",()=>goTo(b.dataset.p)));
+
+// ─── WIRE BUTTONS ─────────────────────────────────────────
+$("api-key").addEventListener("input",e=>{
+  OPENAI_KEY=e.target.value.trim();
+  const st=$("api-st");
+  if(OPENAI_KEY.startsWith("sk-")&&OPENAI_KEY.length>20){st.textContent="⬤ Key set — GEO enabled";st.className="api-st ok";}
+  else{st.textContent="⬤ Not set — GEO disabled";st.className="api-st no";}
+});
+
+$("promote-btn").addEventListener("click",()=>{
+  const h=chipScores,high=Object.values(h).filter(v=>v==="high").length,med=Object.values(h).filter(v=>v==="medium").length;
+  if(!high&&!med){alert("No High or Medium chips scored yet.\n\nScore chips in Keyword Hunting first.");return;}
+  alert(`✅ ${high} High + ${med} Medium chips are now active in the Phrase Builder.\nLow chips are excluded.`);
+  goTo("builder");
+});
+
+$("reset-hunt-btn").addEventListener("click",()=>{
+  if(confirm("Reset all chip scores?")){chipScores={};saveCS();renderHuntGrid();renderBuilderGrid();}
+});
+
+$("add-all-btn").addEventListener("click",addAllPhrases);
+
+$("clear-sel-btn").addEventListener("click",()=>{
+  selectedTokens={};updatePreview();renderBuilderGrid();
+});
+
+$("auto-btn").addEventListener("click",autoGenerate);
+
+$("clear-all-btn").addEventListener("click",()=>{
+  if(confirm("Clear all keywords? This cannot be undone.")){
+    keywords=[];
+    try{localStorage.removeItem("kw_v3");}catch(e){}
+    renderKwList();renderBatches();updateKwStats();
+  }
+});
+
+$("consolidate-btn").addEventListener("click",consolidate);
+
+document.querySelectorAll(".top-n").forEach(btn=>{
+  btn.addEventListener("click",()=>applyTopN(parseInt(btn.dataset.n)));
+});
+
+$("send-geo-btn").addEventListener("click",sendToGeo);
+$("run-all-btn").addEventListener("click",runAllGeo);
+$("clear-geo-btn").addEventListener("click",()=>{geoResponses={};renderGeoPanel();});
+$("gen-report-btn").addEventListener("click",generateReport);
+$("copy-btn").addEventListener("click",()=>{const ta=$("exp-area");ta.select();try{document.execCommand("copy");}catch(e){}});
+
+// ─── INIT ─────────────────────────────────────────────────
+loadState();
+renderHuntGrid();
+renderBuilderGrid();
+renderKwList();
+updateKwStats();
+updatePreview();
+</script>
+</body>
+</html>
